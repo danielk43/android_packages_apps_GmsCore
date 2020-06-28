@@ -1,8 +1,8 @@
 diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
-index 4fc3a6c3b74..b7bc1b705b3 100644
+index 7bcd7a048db..d5c7d1bbbfd 100644
 --- a/core/res/AndroidManifest.xml
 +++ b/core/res/AndroidManifest.xml
-@@ -2652,6 +2652,13 @@
+@@ -2655,6 +2655,13 @@
          android:description="@string/permdesc_getPackageSize"
          android:protectionLevel="normal" />
  
