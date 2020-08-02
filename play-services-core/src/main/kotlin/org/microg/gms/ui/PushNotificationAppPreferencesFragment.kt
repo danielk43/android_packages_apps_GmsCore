@@ -71,7 +71,7 @@ class PushNotificationAppPreferencesFragment : PreferenceFragmentCompat() {
 
     private fun showUnregisterConfirm(unregisterConfirmDesc: Int) {
         val pm = requireContext().packageManager
-        val applicationInfo = pm.getApplicationInfoIfExists(packageName)
+        val applicationInfo = packageName?.let { pm.getApplicationInfo(it, 0) }
         AlertDialog.Builder(requireContext())
                 .setTitle(getString(R.string.gcm_unregister_confirm_title, applicationInfo?.loadLabel(pm)
                         ?: packageName))
