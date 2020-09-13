@@ -17,6 +17,7 @@
 package org.microg.gms.common;
 
 import android.app.ActivityManager;
+import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -26,6 +27,7 @@ import android.os.Binder;
 
 import androidx.annotation.Nullable;
 
+import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -63,6 +65,7 @@ public class PackageUtils {
         KNOWN_GOOGLE_PACKAGES.put("com.google.android.apps.village.boond", "48e7985b8f901df335b5d5223579c81618431c7b");
         KNOWN_GOOGLE_PACKAGES.put("com.google.android.apps.subscriptions.red", "de8304ace744ae4c4e05887a27a790815e610ff0");
         KNOWN_GOOGLE_PACKAGES.put("com.google.android.apps.meetings", "47a6936b733dbdb45d71997fbe1d610eca36b8bf");
+        KNOWN_GOOGLE_PACKAGES.put("com.google.android.apps.nbu.paisa.user", "80df78bb700f9172bc671779b017ddefefcbf552");
     }
 
     public static boolean isGooglePackage(Context context, String packageName) {
@@ -226,6 +229,19 @@ public class PackageUtils {
             return pi.getTargetPackage();
         } else {
             return pi.getCreatorPackage();
+        }
+    }
+
+    public static String getProcessName() {
+        if (android.os.Build.VERSION.SDK_INT >= 28)
+            return Application.getProcessName();
+        try {
+            Class<?> activityThread = Class.forName("android.app.ActivityThread");
+            String methodName = android.os.Build.VERSION.SDK_INT >= 18 ? "currentProcessName" : "currentPackageName";
+            Method getProcessName = activityThread.getDeclaredMethod(methodName);
+            return (String) getProcessName.invoke(null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

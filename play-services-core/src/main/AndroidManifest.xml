@@ -64,6 +64,11 @@
         android:name="org.microg.gms.EXTENDED_ACCESS"
         android:label="@string/perm_extended_access_label"
         android:protectionLevel="dangerous" />
+    <permission
+        android:name="org.microg.gms.PROVISION"
+        android:description="@string/perm_provision_description"
+        android:label="@string/perm_provision_label"
+        android:protectionLevel="privileged|signature" />
 
     <uses-permission android:name="android.permission.FAKE_PACKAGE_SIGNATURE" />
 
@@ -102,23 +107,33 @@
         android:name="android.permission.UPDATE_APP_OPS_STATS"
         tools:ignore="ProtectedPermissions" />
 
+    <uses-sdk tools:overrideLibrary="com.db.williamchart" />
+
     <application
+        android:name="androidx.multidex.MultiDexApplication"
         android:allowBackup="false"
         android:extractNativeLibs="false"
         android:icon="@mipmap/ic_core_service_app"
-        android:label="@string/gms_app_name">
+        android:label="@string/gms_app_name"
+        android:theme="@style/Theme.AppCompat.DayNight">
         <meta-data
             android:name="fake-signature"
             android:value="@string/fake_signature" />
 
+        <!-- Provision -->
+
+        <service
+            android:name="org.microg.gms.provision.ProvisionService"
+            android:exported="true"
+            android:permission="org.microg.gms.PROVISION" />
+
         <!-- Location -->
 
-        <activity android:name="org.microg.nlp.ui.BackendSettingsActivity"
-            android:theme="@style/Theme.AppCompat.DayNight" />
+        <activity android:name="org.microg.nlp.ui.BackendSettingsActivity" android:process=":ui" />
 
         <activity
             android:name="org.microg.gms.ui.PlacePickerActivity"
-            android:exported="true"
+            android:exported="true" android:process=":ui"
             android:label="@string/pick_place_title"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
             <intent-filter>
@@ -178,6 +193,8 @@
             </intent-filter>
         </service>
 
+        <receiver android:name="org.microg.gms.checkin.ServiceInfoReceiver" />
+
         <receiver android:name="org.microg.gms.checkin.TriggerReceiver">
             <intent-filter>
                 <action android:name="android.server.checkin.CHECKIN" />
@@ -199,8 +216,7 @@
 
         <!-- Cloud Messaging -->
         <service
-            android:name="org.microg.gms.gcm.PushRegisterService"
-            android:permission="com.google.android.c2dm.permission.RECEIVE">
+            android:name="org.microg.gms.gcm.PushRegisterService">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.REGISTER" />
                 <action android:name="com.google.android.c2dm.intent.UNREGISTER" />
@@ -218,12 +234,13 @@
         <service android:name="org.microg.gms.gcm.McsService" />
 
         <receiver
-            android:name="org.microg.gms.gcm.SendReceiver"
-            android:permission="com.google.android.c2dm.permission.RECEIVE">
+            android:name="org.microg.gms.gcm.SendReceiver">
             <intent-filter>
                 <action android:name="com.google.android.gcm.intent.SEND" />
             </intent-filter>
         </receiver>
+
+        <receiver android:name="org.microg.gms.gcm.ServiceInfoReceiver" />
 
         <receiver android:name="org.microg.gms.gcm.TriggerReceiver">
             <intent-filter>
@@ -261,6 +278,7 @@
         <service android:name="org.microg.gms.droidguard.DroidGuardService">
             <intent-filter>
                 <action android:name="com.google.android.gms.droidguard.service.START" />
+                <action android:name="com.google.android.gms.droidguard.service.PING" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -332,7 +350,8 @@
         <activity
             android:name="org.microg.tools.AccountPickerActivity"
             android:excludeFromRecents="true"
-            android:exported="true">
+            android:exported="true"
+            android:process=":ui">
             <intent-filter>
                 <action android:name="com.google.android.gms.common.account.CHOOSE_ACCOUNT" />
 
@@ -344,7 +363,8 @@
             android:name="org.microg.gms.auth.login.LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
-            android:theme="@style/LoginBlueTheme">
+            android:process=":ui"
+            android:theme="@style/Theme.LoginBlue">
             <intent-filter>
                 <action android:name="com.google.android.gms.auth.login.LOGIN" />
 
@@ -356,6 +376,7 @@
             android:name="org.microg.gms.auth.AskPermissionActivity"
             android:excludeFromRecents="true"
             android:exported="true"
+            android:process=":ui"
             android:theme="@style/Theme.AppCompat.DayNight.Dialog" />
 
         <service
@@ -364,7 +385,8 @@
 
         <activity
             android:name=".auth.TokenActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:process=":ui" />
 
         <provider
             android:name="org.microg.gms.auth.AccountContentProvider"
@@ -382,6 +404,7 @@
 
         <activity
             android:name="org.microg.gms.games.UpgradeActivity"
+            android:process=":ui"
             android:theme="@style/Theme.AppCompat.DayNight.Dialog">
             <intent-filter>
                 <action android:name="com.google.android.gms.games.PLAY_GAMES_UPGRADE" />
@@ -397,39 +420,57 @@
             </intent-filter>
         </service>
 
-        <!-- Chimera spoof -->
+        <!-- Chimera -->
         <provider
-            android:name="org.microg.gms.ChimeraSpoofProvider"
+            android:name="org.microg.gms.chimera.ServiceProvider"
             android:authorities="com.google.android.gms.chimera"
             android:exported="true" />
 
         <!-- microG custom UI -->
+
+        <activity
+            android:name="org.microg.gms.ui.ExposureNotificationsConfirmActivity"
+            android:exported="false"
+            android:process=":ui"
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert.NoActionBar">
+            <intent-filter>
+                <action android:name="org.microg.gms.nearby.exposurenotification.CONFIRM" />
+            </intent-filter>
+        </activity>
 
         <!-- microG Settings shown in Launcher -->
         <activity
             android:name="org.microg.gms.ui.SettingsActivity"
             android:icon="@mipmap/ic_microg_settings"
             android:label="@string/gms_settings_name"
-            android:roundIcon="@mipmap/ic_microg_settings"
-            android:theme="@style/Theme.AppCompat.DayNight">
+            android:process=":ui"
+            android:roundIcon="@mipmap/ic_microg_settings">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+                <action android:name="com.google.android.gms.settings.EXPOSURE_NOTIFICATION_SETTINGS" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="org.microg.gms.ui.SettingsDashboardActivity"
+            android:icon="@mipmap/ic_microg_settings"
+            android:label="Legacy microG Settings"
+            android:process=":ui"
+            android:roundIcon="@mipmap/ic_microg_settings" />
 
         <!-- microG Settings embedded in System Settings on SDK 23 and newer -->
         <activity-alias
             android:name="org.microg.gms.ui.SettingsActivityLink"
             android:icon="@drawable/microg_light_color_24"
             android:label="@string/gms_settings_name"
-            android:targetActivity="org.microg.gms.ui.SettingsActivity"
-            android:theme="@style/Theme.AppCompat.DayNight">
+            android:process=":ui"
+            android:targetActivity="org.microg.gms.ui.SettingsActivity">
             <intent-filter>
                 <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
             </intent-filter>
@@ -448,56 +489,32 @@
         <activity
             android:name="org.microg.gms.ui.AskPushPermission"
             android:excludeFromRecents="true"
+            android:process=":ui"
             android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert" />
 
         <activity
             android:name="org.microg.gms.ui.AboutFragment$AsActivity"
             android:label="@string/pref_about_title"
-            android:theme="@style/Theme.AppCompat.DayNight" />
-
-        <activity
-            android:name="org.microg.gms.ui.CheckinFragment$AsActivity"
-            android:label="@string/service_name_checkin"
-            android:theme="@style/Theme.AppCompat.DayNight" />
-
-        <activity
-            android:name="org.microg.gms.ui.GcmFragment$AsActivity"
-            android:label="@string/service_name_mcs"
-            android:theme="@style/Theme.AppCompat.DayNight" />
-
-        <activity
-            android:name="org.microg.gms.ui.GcmAdvancedFragment$AsActivity"
-            android:label="@string/service_name_mcs"
-            android:theme="@style/Theme.AppCompat.DayNight" />
-
-        <activity
-            android:name="org.microg.gms.ui.GcmAppFragment$AsActivity"
-            android:label="@string/service_name_mcs"
-            android:theme="@style/Theme.AppCompat.DayNight" />
+            android:process=":ui" />
 
         <activity
             android:name="org.microg.gms.ui.GoogleMoreFragment$AsActivity"
             android:label="@string/gms_settings_name"
-            android:theme="@style/Theme.AppCompat.DayNight" />
-
-        <activity
-            android:name="org.microg.gms.ui.SafetyNetFragment$AsActivity"
-            android:label="@string/service_name_snet"
-            android:theme="@style/Theme.AppCompat.DayNight" />
+            android:process=":ui" />
 
         <activity
             android:name="org.microg.gms.ui.SafetyNetAdvancedFragment$AsActivity"
             android:label="@string/service_name_snet"
-            android:theme="@style/Theme.AppCompat.DayNight" />
+            android:process=":ui" />
 
         <activity
             android:name="org.microg.gms.ui.SelfCheckFragment$AsActivity"
             android:label="@string/self_check_title"
-            android:theme="@style/Theme.AppCompat.DayNight" />
+            android:process=":ui" />
 
         <activity
             android:name="org.microg.gms.ui.AccountSettingsActivity"
-            android:theme="@style/Theme.AppCompat.DayNight">
+            android:process=":ui">
             <intent-filter>
                 <action android:name="com.google.android.gms.accountsettings.ACCOUNT_PREFERENCES_SETTINGS" />
                 <action android:name="com.google.android.gms.accountsettings.PRIVACY_SETTINGS" />
@@ -509,7 +526,7 @@
 
         <activity
             android:name="org.microg.gms.ui.LocationSettingsActivity"
-            android:theme="@style/Theme.AppCompat.DayNight">
+            android:process=":ui">
             <intent-filter>
                 <action android:name="com.google.android.gms.location.settings.LOCATION_HISTORY" />
                 <action android:name="com.google.android.location.settings.LOCATION_REPORTING_SETTINGS" />
@@ -612,6 +629,8 @@
             </intent-filter>
         </service>
 
+        <receiver android:name="org.microg.gms.snet.ServiceInfoReceiver" />
+
         <service android:name="org.microg.gms.snet.SafetyNetClientService">
             <intent-filter>
                 <action android:name="com.google.android.gms.safetynet.service.START" />
@@ -631,6 +650,18 @@
         <service android:name="org.microg.gms.cast.CastDeviceControllerService">
             <intent-filter>
                 <action android:name="com.google.android.gms.cast.service.BIND_CAST_DEVICE_CONTROLLER_SERVICE" />
+            </intent-filter>
+        </service>
+
+        <service android:name="org.microg.gms.appinvite.AppInviteService">
+            <intent-filter>
+                <action android:name="com.google.android.gms.appinvite.service.START" />
+            </intent-filter>
+        </service>
+
+        <service android:name="org.microg.gms.firebase.dynamiclinks.DynamicLinksService">
+            <intent-filter>
+                <action android:name="com.google.firebase.dynamiclinks.service.START" />
             </intent-filter>
         </service>
 

@@ -4,8 +4,8 @@
  */
 
 buildscript {
-    ext.nlpVersion = '2.0-alpha1'
-    ext.remoteDroidGuardVersion = '0.1.1'
+    ext.nlpVersion = '2.0-alpha3'
+    ext.remoteDroidGuardVersion = '0.1.2'
     ext.safeParcelVersion = '1.6.0'
     ext.wearableVersion = '0.1.1'
 
@@ -14,6 +14,7 @@ buildscript {
 
     ext.annotationVersion = '1.1.0'
     ext.appcompatVersion = '1.1.0'
+    ext.coreVersion = '1.3.0'
     ext.fragmentVersion = '1.2.5'
     ext.lifecycleVersion = '2.2.0'
     ext.mediarouterVersion = '1.1.0'
@@ -22,12 +23,13 @@ buildscript {
     ext.preferenceVersion = '1.1.1'
     ext.recyclerviewVersion = '1.1.0'
 
-    ext.supportLibraryVersion = "28.0.0"
-    ext.slf4jVersion = "1.7.25"
+    ext.supportLibraryVersion = '28.0.0'
+    ext.slf4jVersion = '1.7.25'
+    ext.wireVersion = '3.2.2'
 
-    ext.androidBuildGradleVersion = "3.6.3"
+    ext.androidBuildGradleVersion = '3.6.3'
 
-    ext.androidBuildVersionTools = "29.0.3"
+    ext.androidBuildVersionTools = '29.0.3'
 
     ext.androidMinSdk = 14
     ext.androidTargetSdk = 29
@@ -41,6 +43,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$androidBuildGradleVersion"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "com.squareup.wire:wire-gradle-plugin:$wireVersion"
     }
 }
 
@@ -53,7 +56,7 @@ def execResult(...args) {
     return stdout.toString().trim()
 }
 
-def gmsVersion = "19.4.20"
+def gmsVersion = "20.33.15"
 def gmsVersionCode = Integer.parseInt(gmsVersion.replaceAll('\\.', ''))
 def gitVersionBase = execResult('git', 'describe', '--tags', '--abbrev=0', '--match=v[0-9]*').substring(1)
 def gitCommitCount = Integer.parseInt(execResult('git', 'rev-list', '--count', "v$gitVersionBase..HEAD"))

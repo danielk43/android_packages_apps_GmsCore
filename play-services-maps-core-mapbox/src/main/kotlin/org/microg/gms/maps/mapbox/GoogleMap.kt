@@ -223,6 +223,11 @@ class GoogleMapImpl(private val context: Context, var options: GoogleMapOptions)
 
     override fun stopAnimation() = map?.cancelTransitions() ?: Unit
 
+    override fun setMapStyle(options: MapStyleOptions?): Boolean {
+        Log.d(TAG, "setMapStyle options: " + options?.getJson())
+        return true
+    }
+
     override fun setMinZoomPreference(minZoom: Float) {
         map?.setMinZoomPreference(minZoom.toDouble() - 1)
     }
@@ -267,7 +272,7 @@ class GoogleMapImpl(private val context: Context, var options: GoogleMapOptions)
         return fill
     }
 
-    override fun addMarker(options: MarkerOptions): IMarkerDelegate? {
+    override fun addMarker(options: MarkerOptions): IMarkerDelegate {
         val marker = MarkerImpl(this, "m${markerId++}", options)
         synchronized(this) {
             val symbolManager = symbolManager
@@ -312,10 +317,12 @@ class GoogleMapImpl(private val context: Context, var options: GoogleMapOptions)
 
     fun <T : Annotation<*>> clear(manager: AnnotationManager<*, T, *, *, *, *>) {
         val annotations = manager.getAnnotations()
-        for (i in 0..annotations.size()) {
+        var i = 0
+        while (i < annotations.size()) {
             val key = annotations.keyAt(i)
-            val value = annotations[key];
+            val value = annotations[key]
             if (value is T) manager.delete(value)
+            else i++
         }
     }
 
@@ -456,7 +463,7 @@ class GoogleMapImpl(private val context: Context, var options: GoogleMapOptions)
 
     }
 
-    override fun snapshot(callback: ISnapshotReadyCallback, bitmap: IObjectWrapper) {
+    override fun snapshot(callback: ISnapshotReadyCallback, bitmap: IObjectWrapper?) {
         Log.d(TAG, "unimplemented Method: snapshot")
 
     }
@@ -717,7 +724,10 @@ class GoogleMapImpl(private val context: Context, var options: GoogleMapOptions)
         // TODO can crash?
         mapView?.onDestroy()
         mapView = null
-        map = null
+
+        // Don't make it null; this object is not deleted immediately, and it may want to access map.* stuff
+        //map = null
+
         created = false
         initialized = false
         loaded = false
