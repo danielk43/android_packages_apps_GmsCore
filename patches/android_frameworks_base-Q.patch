@@ -46,10 +46,10 @@ index 40270e62e11..d7a8fc8289e 100644
      <string name="permlab_statusBar">disable or modify status bar</string>
      <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
 diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
-index 179abe958b1..ebdc4826938 100644
+index 500660dca4a..229ff1a07a4 100644
 --- a/services/core/java/com/android/server/pm/PackageManagerService.java
 +++ b/services/core/java/com/android/server/pm/PackageManagerService.java
-@@ -4186,8 +4186,9 @@ public class PackageManagerService extends IPackageManager.Stub
+@@ -4179,8 +4179,9 @@ public class PackageManagerService extends IPackageManager.Stub
              final Set<String> permissions = ArrayUtils.isEmpty(p.requestedPermissions)
                      ? Collections.emptySet() : permissionsState.getPermissions(userId);
  
@@ -61,7 +61,7 @@ index 179abe958b1..ebdc4826938 100644
  
              if (packageInfo == null) {
                  return null;
-@@ -4223,6 +4224,24 @@ public class PackageManagerService extends IPackageManager.Stub
+@@ -4216,6 +4217,24 @@ public class PackageManagerService extends IPackageManager.Stub
          }
      }
  
