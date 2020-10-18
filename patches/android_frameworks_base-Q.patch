@@ -30,7 +30,7 @@ index a84d23b624b..89754ba11ef 100644
  
      <!-- This string array can be overriden to enable test location providers initially. -->
 diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
-index 40270e62e11..d7a8fc8289e 100644
+index 7e975f68ec3..e997d3ca67d 100644
 --- a/core/res/res/values/strings.xml
 +++ b/core/res/res/values/strings.xml
 @@ -830,6 +830,11 @@
