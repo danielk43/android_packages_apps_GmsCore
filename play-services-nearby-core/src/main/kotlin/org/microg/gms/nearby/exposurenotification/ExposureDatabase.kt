@@ -19,6 +19,7 @@ import com.google.android.gms.nearby.exposurenotification.ExposureConfiguration
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import kotlinx.coroutines.*
 import okio.ByteString
+import org.json.JSONObject
 import java.io.File
 import java.lang.Runnable
 import java.nio.ByteBuffer
@@ -77,6 +78,12 @@ class ExposureDatabase private constructor(private val context: Context) : SQLit
             db.execSQL("CREATE TABLE IF NOT EXISTS $TABLE_TEK_CHECK_FILE_MATCH(tcfid INTEGER REFERENCES $TABLE_TEK_CHECK_FILE(tcfid) ON DELETE CASCADE, keyData BLOB NOT NULL, rollingStartNumber INTEGER NOT NULL, rollingPeriod INTEGER NOT NULL, transmissionRiskLevel INTEGER NOT NULL, UNIQUE(tcfid, keyData, rollingStartNumber, rollingPeriod));")
             db.execSQL("CREATE INDEX IF NOT EXISTS index_${TABLE_TEK_CHECK_FILE_MATCH}_tcfid ON $TABLE_TEK_CHECK_FILE_MATCH(tcfid);")
             db.execSQL("CREATE INDEX IF NOT EXISTS index_${TABLE_TEK_CHECK_FILE_MATCH}_key ON $TABLE_TEK_CHECK_FILE_MATCH(keyData, rollingStartNumber, rollingPeriod);")
+        }
+        if (oldVersion < 6) {
+            Log.d(TAG, "Fixing invalid rssi values from previous database version")
+            // There's no bluetooth chip with a sensitivity that would result in rssi -200, so this would be invalid.
+            // RSSI of -100 is already extremely low and thus is a good "default" value
+            db.execSQL("UPDATE $TABLE_ADVERTISEMENTS SET rssi = -100 WHERE rssi < -200;")
         }
         Log.d(TAG, "Finished database upgrade")
     }
@@ -154,9 +161,6 @@ class ExposureDatabase private constructor(private val context: Context) : SQLit
         delete(TABLE_ADVERTISEMENTS, null, null)
         delete(TABLE_TEK_CHECK_FILE_MATCH, null, null)
         update(TABLE_TEK_CHECK_SINGLE, ContentValues().apply {
-            put("matched", 0)
-        }, null, null)
-        update(TABLE_TEK_CHECK_FILE, ContentValues().apply {
             put("matched", 0)
         }, null, null)
     }
@@ -652,6 +656,34 @@ class ExposureDatabase private constructor(private val context: Context) : SQLit
         }
     }
 
+    fun countDiagnosisKeysInvolved(tid: Long): Long = readableDatabase.run {
+        val fromFile = rawQuery("SELECT SUM($TABLE_TEK_CHECK_FILE.keys) AS keys FROM $TABLE_TEK_CHECK_FILE_TOKEN JOIN $TABLE_TEK_CHECK_FILE ON $TABLE_TEK_CHECK_FILE_TOKEN.tcfid = $TABLE_TEK_CHECK_FILE.tcfid WHERE $TABLE_TEK_CHECK_FILE_TOKEN.tid = $tid;", null).use { cursor ->
+            if (cursor.moveToNext()) {
+                cursor.getLong(0)
+            } else {
+                0
+            }
+        }
+        val single = rawQuery("SELECT COUNT(*) as keys FROM $TABLE_TEK_CHECK_SINGLE_TOKEN WHERE $TABLE_TEK_CHECK_SINGLE_TOKEN.tid = $tid;", null).use { cursor ->
+            if (cursor.moveToNext()) {
+                cursor.getLong(0)
+            } else {
+                0
+            }
+        }
+        return fromFile + single
+    }
+
+    fun methodUsageHistogram(packageName: String): List<Pair<String, Int>> = readableDatabase.run {
+        val list = arrayListOf<Pair<String, Int>>()
+        rawQuery("SELECT method, COUNT(*) AS count FROM $TABLE_APP_LOG WHERE package = ? GROUP BY method;", arrayOf(packageName)).use { cursor ->
+            while (cursor.moveToNext()) {
+                list.add(cursor.getString(0) to cursor.getInt(1))
+            }
+        }
+        list.sortedByDescending { it.second }
+    }
+
     private fun ensureTemporaryExposureKey(): TemporaryExposureKey = writableDatabase.let { database ->
         database.beginTransactionNonExclusive()
         try {
@@ -700,7 +732,7 @@ class ExposureDatabase private constructor(private val context: Context) : SQLit
 
     companion object {
         private const val DB_NAME = "exposure.db"
-        private const val DB_VERSION = 5
+        private const val DB_VERSION = 6
         private const val DB_SIZE_TOO_LARGE = 256L * 1024 * 1024
         private const val MAX_DELETE_TIME = 5000L
         private const val TABLE_ADVERTISEMENTS = "advertisements"
