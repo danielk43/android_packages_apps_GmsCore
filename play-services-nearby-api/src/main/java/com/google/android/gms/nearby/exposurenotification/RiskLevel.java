@@ -8,6 +8,12 @@
 
 package com.google.android.gms.nearby.exposurenotification;
 
+import org.microg.gms.common.PublicApi;
+
+/**
+ * Risk level defined for an {@link TemporaryExposureKey}.
+ */
+@PublicApi
 public @interface RiskLevel {
     int RISK_LEVEL_INVALID = 0;
     int RISK_LEVEL_LOWEST = 1;
@@ -18,4 +24,7 @@ public @interface RiskLevel {
     int RISK_LEVEL_HIGH = 6;
     int RISK_LEVEL_VERY_HIGH = 7;
     int RISK_LEVEL_HIGHEST = 8;
+
+    @PublicApi(exclude = true)
+    int VALUES = 9;
 }

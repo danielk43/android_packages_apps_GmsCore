@@ -107,9 +107,8 @@
         android:name="android.permission.UPDATE_APP_OPS_STATS"
         tools:ignore="ProtectedPermissions" />
 
-    <uses-sdk tools:overrideLibrary="com.db.williamchart" />
-
     <application
+        android:forceQueryable="true"
         android:name="androidx.multidex.MultiDexApplication"
         android:allowBackup="false"
         android:extractNativeLibs="false"
@@ -197,8 +196,13 @@
 
         <receiver android:name="org.microg.gms.checkin.TriggerReceiver">
             <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.AIRPLANE_MODE" />
+
                 <action android:name="android.server.checkin.CHECKIN" />
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.PACKAGE_RESTARTED" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
@@ -341,12 +345,6 @@
                 android:value="1" />
         </service>
 
-        <service android:name=".auth.FirebaseAuthService">
-            <intent-filter>
-                <action android:name="com.google.firebase.auth.api.gms.service.START" />
-            </intent-filter>
-        </service>
-
         <activity
             android:name="org.microg.tools.AccountPickerActivity"
             android:excludeFromRecents="true"
@@ -426,18 +424,6 @@
             android:authorities="com.google.android.gms.chimera"
             android:exported="true" />
 
-        <!-- microG custom UI -->
-
-        <activity
-            android:name="org.microg.gms.ui.ExposureNotificationsConfirmActivity"
-            android:exported="false"
-            android:process=":ui"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert.NoActionBar">
-            <intent-filter>
-                <action android:name="org.microg.gms.nearby.exposurenotification.CONFIRM" />
-            </intent-filter>
-        </activity>
-
         <!-- microG Settings shown in Launcher -->
         <activity
             android:name="org.microg.gms.ui.SettingsActivity"
@@ -490,7 +476,7 @@
             android:name="org.microg.gms.ui.AskPushPermission"
             android:excludeFromRecents="true"
             android:process=":ui"
-            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert" />
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert.NoActionBar" />
 
         <activity
             android:name="org.microg.gms.ui.AboutFragment$AsActivity"
@@ -536,12 +522,20 @@
             </intent-filter>
         </activity>
 
-        <!-- Other -->
+        <!-- Phenotype -->
 
         <provider
             android:name="org.microg.gms.phenotype.ConfigurationProvider"
             android:authorities="com.google.android.gms.phenotype"
             android:exported="true" />
+
+        <service android:name="org.microg.gms.phenotype.PhenotypeService">
+            <intent-filter>
+                <action android:name="com.google.android.gms.phenotype.service.START" />
+            </intent-filter>
+        </service>
+
+        <!-- Other -->
 
         <service
             android:name="org.microg.gms.measurement.MeasurementBrokerService"
@@ -693,7 +687,6 @@
                 <action android:name="com.google.android.gms.audiomodem.service.AudioModemService.START" />
                 <action android:name="com.google.android.gms.nearby.sharing.service.NearbySharingService.START" />
                 <action android:name="com.google.android.gms.herrevad.services.LightweightNetworkQualityAndroidService.START" />
-                <action android:name="com.google.android.gms.phenotype.service.START" />
                 <action android:name="com.google.android.gms.auth.api.credentials.service.START" />
                 <action android:name="com.google.android.gms.gass.START" />
             </intent-filter>

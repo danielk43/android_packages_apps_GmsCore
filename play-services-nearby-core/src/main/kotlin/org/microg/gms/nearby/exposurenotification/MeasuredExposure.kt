@@ -5,6 +5,7 @@
 
 package org.microg.gms.nearby.exposurenotification
 
+import android.util.Log
 import com.google.android.gms.nearby.exposurenotification.ExposureConfiguration
 import com.google.android.gms.nearby.exposurenotification.ExposureInformation
 import com.google.android.gms.nearby.exposurenotification.RiskLevel
@@ -24,10 +25,13 @@ fun List<MeasuredExposure>.merge(): List<MergedExposure> {
     for (key in keys) {
         var merged: MergedExposure? = null
         for (exposure in filter { it.key == key }.sortedBy { it.timestamp }) {
-            if (merged == null) {
-                merged = MergedExposure(key, exposure.timestamp, listOf(MergedSubExposure(exposure.attenuation, exposure.duration)))
-            } else if (merged.timestamp + MergedExposure.MAXIMUM_DURATION + ROLLING_WINDOW_LENGTH_MS > exposure.timestamp) {
+            if (merged != null && merged.timestamp + MergedExposure.MAXIMUM_DURATION + ROLLING_WINDOW_LENGTH_MS > exposure.timestamp) {
                 merged += exposure
+            } else {
+                if (merged != null) {
+                    result.add(merged)
+                }
+                merged = MergedExposure(key, exposure.timestamp, listOf(MergedSubExposure(exposure.attenuation, exposure.duration)))
             }
             if (merged.durationInMinutes > 30) {
                 result.add(merged)
@@ -111,7 +115,10 @@ data class MergedExposure internal constructor(val key: TemporaryExposureKey, va
     }
 
     fun getRiskScore(configuration: ExposureConfiguration): Int {
-        return getAttenuationRiskScore(configuration) * getDaysSinceLastExposureRiskScore(configuration) * getDurationRiskScore(configuration) * getTransmissionRiskScore(configuration)
+        val risk = getAttenuationRiskScore(configuration) * getDaysSinceLastExposureRiskScore(configuration) * getDurationRiskScore(configuration) * getTransmissionRiskScore(configuration)
+        Log.d(TAG, "Risk score calculation: ${getAttenuationRiskScore(configuration)} * ${getDaysSinceLastExposureRiskScore(configuration)} * ${getDurationRiskScore(configuration)} * ${getTransmissionRiskScore(configuration)} = $risk")
+        if (risk < configuration.minimumRiskScore) return 0
+        return risk
     }
 
     fun getAttenuationDurations(configuration: ExposureConfiguration): IntArray {
